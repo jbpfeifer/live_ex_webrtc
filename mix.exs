@@ -42,8 +42,8 @@ defmodule LiveExWebRTC.MixProject do
     [
       {:phoenix_live_view, "~> 1.0"},
       {:jason, "~> 1.0"},
-      {:ex_webrtc, "~> 0.16.1"},
-      {:ex_webrtc_recorder, "~> 0.3.0"},
+      {:ex_webrtc, "~> 0.17.0"},
+      {:ex_webrtc_recorder, "~> 0.4.0"},
 
       # Dev deps
       {:ex_doc, "~> 0.31", only: :dev, runtime: false}
