@@ -564,13 +564,16 @@ defmodule LiveExWebRTC.Publisher do
   def handle_info({:ex_webrtc, _pc, {:rtp, track_id, rid, packet}}, socket) do
     %{publisher: publisher} = socket.assigns
 
-    if publisher.record?, do: Recorder.record(publisher.recorder, track_id, rid, packet)
-
     {kind, rid} =
       case publisher do
         %Publisher{video_track: %{id: ^track_id}} -> {:video, rid || "h"}
         %Publisher{audio_track: %{id: ^track_id}} -> {:audio, nil}
       end
+
+    if publisher.record? do
+      codec = codec_for(publisher, kind, packet.payload_type)
+      Recorder.record(publisher.recorder, track_id, rid, codec, packet)
+    end
 
     packet =
       if publisher.on_packet,
@@ -862,5 +865,18 @@ defmodule LiveExWebRTC.Publisher do
     socket
     |> assign(:publisher, publisher)
     |> push_event("stop-streaming", %{})
+  end
+
+  defp codec_for(publisher, kind, payload_type) do
+    codecs =
+      case kind do
+        :audio -> publisher.audio_codecs || PeerConnection.Configuration.default_audio_codecs()
+        :video -> publisher.video_codecs || PeerConnection.Configuration.default_video_codecs()
+      end
+
+    Enum.find(codecs, fn
+      %RTPCodecParameters{payload_type: ^payload_type} -> true
+      _ -> false
+    end)
   end
 end
